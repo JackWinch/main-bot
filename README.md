@@ -19,3 +19,18 @@ A Dockerfile is maintained in the repository that can be built and the resultant
 environment for each developer.
 
 The docker image shall also be utilised in the CI pipeline to enable pre-merge checks on changes, etc.
+
+## Documentation
+
+This README serves as the most basic top-level documentation for the project. It contains basic information
+and references to more rich documentation.
+
+The project's main documentation is implemented directly within the repository using Sphinx. As part of the
+nightly release, this documentation is built and made available
+[here](https://stackoverflow.com/questions/7653483/github-relative-link-in-markdown-file).
+
+You can build the documentation from within the Docker image directly using the following:
+
+`$ ./build-sphinx-docs.sh`
+
+Make sure you are within the project's root directory when you run this command.
