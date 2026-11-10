@@ -1,0 +1,44 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  clang-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build dev image
+        run: docker build -t main-bot-dev -f Dockerfile .
+
+      - name: Check formatting
+        run: |
+          docker run --rm \
+            -v "$PWD:/workspace" \
+            main-bot-dev \
+            bash -c 'find src -regex ".*\.\(cpp\|hpp\|h\|cc\)$" -print0 | xargs -0 clang-format --dry-run --Werror'
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build dev image
+        run: docker build -t main-bot-dev -f Dockerfile .
+
+      - name: Build and run tests
+        run: |
+          docker run --rm \
+            -v "$PWD:/workspace" \
+            main-bot-dev \
+            bash -c '
+              set -euo pipefail
+              g++ -std=c++17 -Isrc src/add.cpp src/test/test_add.cpp -lgtest -lgtest_main -pthread -o /tmp/main-bot-tests
+              /tmp/main-bot-tests
+            '
