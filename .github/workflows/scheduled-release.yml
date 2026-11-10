@@ -31,6 +31,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.name.outputs.tag }}
+          BRANCH: ${{ github.ref_name }}
         run: |
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Release $TAG already exists, skipping."
@@ -42,18 +43,38 @@ jobs:
 
           if [ -n "$PREV" ]; then
             RANGE="$PREV..HEAD"
-            echo "## Commits since $PREV" > notes.md
+            echo "## Pull requests since $PREV" > notes.md
           else
             RANGE="HEAD"
-            echo "## Commits" > notes.md
+            echo "## Pull requests" > notes.md
           fi
           echo >> notes.md
 
-          COMMITS=$(git log "$RANGE" --no-merges --pretty=format:'- %s (%h)')
-          if [ -n "$COMMITS" ]; then
-            echo "$COMMITS" >> notes.md
+          # For each commit in the range, find the merged PR it came from
+          : > prs.tsv
+          : > direct.md
+          for SHA in $(git log "$RANGE" --pretty=%H); do
+            PR=$(gh api "repos/$GITHUB_REPOSITORY/commits/$SHA/pulls" \
+              --jq "[.[] | select(.merged_at != null and .base.ref == \"$BRANCH\")][0]
+                    | select(. != null) | \"\(.number)\t\(.user.login)\t\(.title)\"")
+            if [ -n "$PR" ]; then
+              echo "$PR" >> prs.tsv
+            else
+              # Commit pushed straight to the branch, not via a PR
+              git log -1 --no-merges --pretty='- %s (%h)' "$SHA" >> direct.md
+            fi
+          done
+
+          if [ -s prs.tsv ]; then
+            sort -t $'\t' -k1,1n -u prs.tsv \
+              | awk -F '\t' '{ print "- #" $1 " @" $2 " " $3 }' >> notes.md
           else
-            echo "No new commits." >> notes.md
+            echo "No new pull requests." >> notes.md
+          fi
+
+          if [ -s direct.md ]; then
+            printf '\n## Commits without a pull request\n\n' >> notes.md
+            cat direct.md >> notes.md
           fi
 
           gh release create "$TAG" \
