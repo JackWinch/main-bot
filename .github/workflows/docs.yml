@@ -1,9 +1,10 @@
 name: Docs
 
 on:
-  push:
-    branches: [main]
-  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * 4" # every Thursday at 03:00
+      timezone: "Europe/Bucharest" # handles summer/winter time automatically
+  workflow_dispatch: # lets you run it manually from the Actions tab
 
 permissions:
   contents: read
