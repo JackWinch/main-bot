@@ -1,0 +1,62 @@
+name: Scheduled release
+
+on:
+  schedule:
+    - cron: "10 20 * * *" # every day at 20:10
+      timezone: "Europe/Bucharest" # handles summer/winter time automatically
+  workflow_dispatch: # lets you run it manually from the Actions tab
+
+permissions:
+  contents: write # needed to create tags and releases
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history and tags, needed for the commit list
+
+      - name: Build release name
+        id: name
+        env:
+          TZ: Europe/Bucharest
+        run: |
+          YY=$(date +%g)                        # ISO year, 2 digits (26)
+          CW=$(date +%V)                        # ISO calendar week (01-53)
+          DD=$(printf '%02d' $(( $(date +%w) + 1 )))  # Sunday=01 ... Saturday=07
+          echo "tag=preview-${YY}cw${CW}-${DD}" >> "$GITHUB_OUTPUT"
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.name.outputs.tag }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists, skipping."
+            exit 0
+          fi
+
+          # Most recent previous release (if any)
+          PREV=$(gh release list --limit 1 --exclude-drafts --json tagName --jq '.[0].tagName // empty')
+
+          if [ -n "$PREV" ]; then
+            RANGE="$PREV..HEAD"
+            echo "## Commits since $PREV" > notes.md
+          else
+            RANGE="HEAD"
+            echo "## Commits" > notes.md
+          fi
+          echo >> notes.md
+
+          COMMITS=$(git log "$RANGE" --no-merges --pretty=format:'- %s (%h)')
+          if [ -n "$COMMITS" ]; then
+            echo "$COMMITS" >> notes.md
+          else
+            echo "No new commits." >> notes.md
+          fi
+
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --notes-file notes.md \
+            --target "${{ github.sha }}"
