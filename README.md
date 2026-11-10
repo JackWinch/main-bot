@@ -27,7 +27,7 @@ and references to more rich documentation.
 
 The project's main documentation is implemented directly within the repository using Sphinx. As part of the
 nightly release, this documentation is built and made available
-[here](https://stackoverflow.com/questions/7653483/github-relative-link-in-markdown-file).
+[here](https://jackwinch.github.io/main-bot/).
 
 You can build the documentation from within the Docker image directly using the following:
 
