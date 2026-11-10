@@ -1,0 +1,2 @@
+# main-bot
+Monorepo of the line follower robot project
