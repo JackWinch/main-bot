@@ -9,8 +9,8 @@ Yet another line
 
 To get started, it is assumed you have one of the two available to you as a development host:
 
-- A machine running native x86-64 Ubuntu 24.06 or a similar Linux disrtibution (prefered); or
-- A WSL2 environment running a Ubuntu 24.06 image on either a Windows 10 / 11 machine.
+- A machine running native x86-64 Ubuntu 24.04 or a similar Linux disrtibution (prefered); or
+- A WSL2 environment running a Ubuntu 24.04 image on either a Windows 10 / 11 machine.
 
 Other development environments may be used although they are not officially supported by the project.
 
@@ -31,6 +31,6 @@ nightly release, this documentation is built and made available
 
 You can build the documentation from within the Docker image directly using the following:
 
-`$ ./build-sphinx-docs.sh`
+`$ ./build-docs.sh`
 
 Make sure you are within the project's root directory when you run this command.
